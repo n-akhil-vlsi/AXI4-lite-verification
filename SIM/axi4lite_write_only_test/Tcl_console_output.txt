@@ -1,0 +1,65 @@
+----------------------------------------------------------------
+UVM-1.2
+(C) 2007-2014 Mentor Graphics Corporation
+(C) 2007-2014 Cadence Design Systems, Inc.
+(C) 2006-2014 Synopsys, Inc.
+(C) 2011-2013 Cypress Semiconductor Corp.
+(C) 2013-2014 NVIDIA Corporation
+----------------------------------------------------------------
+
+  ***********       IMPORTANT RELEASE NOTES         ************
+
+  You are using a version of the UVM library that has been compiled
+  with `UVM_NO_DEPRECATED undefined.
+
+  You are using a version of the UVM library that has been compiled
+  with `UVM_OBJECT_DO_NOT_NEED_CONSTRUCTOR undefined.
+
+      (Specify +UVM_NO_RELNOTES to turn off this notice)
+
+UVM_INFO C:/vivado/Vivado/2024.1/data/system_verilog/uvm_1.2/xlnx_uvm_package.sv(18648) @ 0: reporter [NO_DPI_TSTNAME] UVM_NO_DPI defined--getting UVM_TESTNAME directly, without DPI
+UVM_INFO @ 0: reporter [RNTST] Running test axi4lite_write_only_test...
+UVM_INFO E:/AXI4_Lite_Verification/UVM/axi4lite_coverage.sv(59) @ 0: uvm_test_top.env.cov [COV] Covergroup Created
+UVM_INFO C:/vivado/Vivado/2024.1/data/system_verilog/uvm_1.2/xlnx_uvm_package.sv(20867) @ 0: reporter [UVM/COMP/NAMECHECK] This implementation of the component name checks requires DPI to be enabled
+UVM_INFO E:/AXI4_Lite_Verification/TEST/axi4lite_test.sv(38) @ 0: uvm_test_top [run_phase] issuing initial reset
+UVM_INFO E:/AXI4_Lite_Verification/UVM/axi4lite_monitor.sv(122) @ 5000: uvm_test_top.env.agt.mon [MON] RESET ASSERTED
+UVM_INFO E:/AXI4_Lite_Verification/TEST/axi4lite_test.sv(74) @ 135000: uvm_test_top [run_phase] write only test started
+UVM_INFO E:/AXI4_Lite_Verification/TEST/axi4lite_test.sv(76) @ 775000: uvm_test_top [run_phase] write only test ended
+UVM_INFO C:/vivado/Vivado/2024.1/data/system_verilog/uvm_1.2/xlnx_uvm_package.sv(19968) @ 775000: reporter [TEST_DONE] 'run' phase is ready to proceed to the 'extract' phase
+UVM_INFO E:/AXI4_Lite_Verification/UVM/axi4lite_coverage.sv(76) @ 775000: uvm_test_top.env.cov [COV] FINAL FUNCTIONAL COVERAGE = 57.84%
+UVM_INFO E:/AXI4_Lite_Verification/UVM/axi4lite_scoreboard.sv(122) @ 775000: uvm_test_top.env.sb [SUMMARY] ==========================================
+UVM_INFO E:/AXI4_Lite_Verification/UVM/axi4lite_scoreboard.sv(123) @ 775000: uvm_test_top.env.sb [SUMMARY]         AXI4-LITE SLAVE TEST RESULT
+UVM_INFO E:/AXI4_Lite_Verification/UVM/axi4lite_scoreboard.sv(124) @ 775000: uvm_test_top.env.sb [SUMMARY] ==========================================
+UVM_INFO E:/AXI4_Lite_Verification/UVM/axi4lite_scoreboard.sv(125) @ 775000: uvm_test_top.env.sb [SUMMARY]   Writes Issued        : 17
+UVM_INFO E:/AXI4_Lite_Verification/UVM/axi4lite_scoreboard.sv(126) @ 775000: uvm_test_top.env.sb [SUMMARY]   Writes Correct       : 17
+UVM_INFO E:/AXI4_Lite_Verification/UVM/axi4lite_scoreboard.sv(127) @ 775000: uvm_test_top.env.sb [SUMMARY]   Writes Errored       : 0
+UVM_INFO E:/AXI4_Lite_Verification/UVM/axi4lite_scoreboard.sv(128) @ 775000: uvm_test_top.env.sb [SUMMARY]   Write SLVERR (exp)   : 0
+UVM_INFO E:/AXI4_Lite_Verification/UVM/axi4lite_scoreboard.sv(129) @ 775000: uvm_test_top.env.sb [SUMMARY]   Reads Issued         : 1
+UVM_INFO E:/AXI4_Lite_Verification/UVM/axi4lite_scoreboard.sv(130) @ 775000: uvm_test_top.env.sb [SUMMARY]   Reads Correct        : 1
+UVM_INFO E:/AXI4_Lite_Verification/UVM/axi4lite_scoreboard.sv(131) @ 775000: uvm_test_top.env.sb [SUMMARY]   Reads Errored        : 0
+UVM_INFO E:/AXI4_Lite_Verification/UVM/axi4lite_scoreboard.sv(132) @ 775000: uvm_test_top.env.sb [SUMMARY]   Read SLVERR (exp)    : 0
+UVM_INFO E:/AXI4_Lite_Verification/UVM/axi4lite_scoreboard.sv(134) @ 775000: uvm_test_top.env.sb [SUMMARY]   RESULT               : ALL TESTS PASSED
+UVM_INFO E:/AXI4_Lite_Verification/UVM/axi4lite_scoreboard.sv(137) @ 775000: uvm_test_top.env.sb [SUMMARY] ==========================================
+UVM_INFO C:/vivado/Vivado/2024.1/data/system_verilog/uvm_1.2/xlnx_uvm_package.sv(13673) @ 775000: reporter [UVM/REPORT/SERVER] 
+--- UVM Report Summary ---
+
+** Report counts by severity
+UVM_INFO :   24
+UVM_WARNING :    0
+UVM_ERROR :    0
+UVM_FATAL :    0
+** Report counts by id
+[COV]     2
+[MON]     1
+[NO_DPI_TSTNAME]     1
+[RNTST]     1
+[SUMMARY]    13
+[TEST_DONE]     1
+[UVM/COMP/NAMECHECK]     1
+[UVM/RELNOTES]     1
+[run_phase]     3
+
+$finish called at time : 775 ns : File "C:/vivado/Vivado/2024.1/data/system_verilog/uvm_1.2/xlnx_uvm_package.sv" Line 18699
+INFO: [USF-XSim-96] XSim completed. Design snapshot 'axi4lite_tb_top_behav' loaded.
+INFO: [USF-XSim-97] XSim simulation ran for 100us
+launch_simulation: Time (s): cpu = 00:00:02 ; elapsed = 00:00:08 . Memory (MB): peak = 1596.840 ; gain = 10.102
