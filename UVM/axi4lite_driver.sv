@@ -66,7 +66,7 @@ package axi4lite_driver_pkg;
                 end
             join
 
-            repeat (item.bready_delay_cycles + item.resp_hold_cycles) @(posedge vif.aclk);
+            repeat (item.bready_delay_cycles + item.resp_hold_cycles) @(posedge vif.aclk);            //how long the master waits before accepting the slave's write response.
             vif.bready <= 1'b1;
             @(posedge vif.aclk);
             while (!vif.bvalid) @(posedge vif.aclk);

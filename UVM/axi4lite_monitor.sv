@@ -12,11 +12,7 @@ package axi4lite_monitor_pkg;
         axi4lite_config_obj  cfg;
 
         uvm_analysis_port #(axi4lite_seq_item) mon_ap;
-        // TLM connection used to forward observed transactions to the scoreboard/coverage
 
-        // AW and W can complete their handshakes on different cycles, so each
-        // side is queued independently and paired up only when BVALID fires -
-        // avoids any race on which one "arrived last".
         bit [31:0] awaddr_q[$];
         bit [31:0] wdata_q[$];
         bit [3:0]  wstrb_q[$];
@@ -34,77 +30,92 @@ package axi4lite_monitor_pkg;
         endfunction
 
         task watch_aw();
-            forever begin
+            forever 
+            begin
                 @(posedge vif.aclk);
-                if (vif.awvalid && vif.awready)
-                    awaddr_q.push_back(vif.awaddr);
+                if (vif.awvalid && vif.awready)                      //Data is collected after the handshake is completed,becz the handshake means the data is accepted by the slave.
+                    awaddr_q.push_back(vif.awaddr);                  //so the data accepted by the slave is stored.
             end
         endtask
 
         task watch_w();
-            forever begin
+            forever 
+            begin
                 @(posedge vif.aclk);
-                if (vif.wvalid && vif.wready) begin
-                    wdata_q.push_back(vif.wdata);
+                if (vif.wvalid && vif.wready) 
+                begin
+                    wdata_q.push_back(vif.wdata);                        //Here we store the data in the queue and we use it later when transaction is created.
                     wstrb_q.push_back(vif.wstrb);
                 end
             end
         endtask
 
-        // fires once the write response completes; pulls the matching
-        // address/data/strb off the queues in FIFO order (AXI guarantees
-        // in-order completion on a single-outstanding-ish slave like this one)
+  
         task watch_b();
             axi4lite_seq_item item;
-            forever begin
+            forever 
+            begin
                 @(posedge vif.aclk);
-                if (vif.bvalid && vif.bready) begin
+                if (vif.bvalid && vif.bready) 
+                begin
                     item = axi4lite_seq_item::type_id::create("wr_item");
                     item.do_write   = 1;
                     item.write_done = 1;
-                    item.bresp      = vif.bresp;
+                    item.bresp      = vif.bresp;                                //Here the transaction is created so we are directly storing the data in it.
 
-                    if (awaddr_q.size() > 0) item.awaddr = awaddr_q.pop_front();
-                    else `uvm_error("MON", "bvalid seen but awaddr_q is empty")
+                    if (awaddr_q.size() > 0) 
+                    item.awaddr = awaddr_q.pop_front();
+                    
+                    else 
+                    `uvm_error("MON", "bvalid seen but awaddr_q is empty")
 
-                    if (wdata_q.size() > 0) begin
+                    if (wdata_q.size() > 0) 
+                    begin
                         item.wdata = wdata_q.pop_front();
                         item.wstrb = wstrb_q.pop_front();
                     end
-                    else `uvm_error("MON", "bvalid seen but wdata_q is empty")
+                    
+                    else 
+                    `uvm_error("MON", "bvalid seen but wdata_q is empty")
 
                     mon_ap.write(item);
                     `uvm_info("MONITOR", $sformatf("write complete addr=0x%0h data=0x%0h strb=%0b bresp=%0b",
-                              item.awaddr, item.wdata, item.wstrb, item.bresp), UVM_HIGH)
+                                                               item.awaddr, item.wdata, item.wstrb, item.bresp), UVM_HIGH)
                 end
             end
         endtask
 
         task watch_ar();
-            forever begin
+            forever 
+            begin
                 @(posedge vif.aclk);
                 if (vif.arvalid && vif.arready)
                     araddr_q.push_back(vif.araddr);
             end
         endtask
 
-        task watch_r();
+        task watch_r();                                                    //Transaction is created in the every response channel becz after it we send the transaction to the SB.
             axi4lite_seq_item item;
-            forever begin
+            forever 
+            begin
                 @(posedge vif.aclk);
-                if (vif.rvalid && vif.rready) begin
+                if (vif.rvalid && vif.rready) 
+                begin
                     item = axi4lite_seq_item::type_id::create("rd_item");
                     item.do_read   = 1;
                     item.read_done = 1;
                     item.rdata     = vif.rdata;
                     item.rresp     = vif.rresp;
 
-                    if (araddr_q.size() > 0) item.araddr = araddr_q.pop_front();
-                    else `uvm_error("MON", "rvalid seen but araddr_q is empty")
+                    if (araddr_q.size() > 0) 
+                    item.araddr = araddr_q.pop_front();
+                    
+                    else 
+                    `uvm_error("MON", "rvalid seen but araddr_q is empty")
 
                     mon_ap.write(item);
                     `uvm_info("MONITOR", $sformatf("read complete addr=0x%0h data=0x%0h rresp=%0b",
-                              item.araddr, item.rdata, item.rresp), UVM_HIGH)
+                                                              item.araddr, item.rdata, item.rresp), UVM_HIGH)
                 end
             end
         endtask
@@ -113,9 +124,11 @@ package axi4lite_monitor_pkg;
         task watch_reset();
             axi4lite_seq_item item;
             bit prev_aresetn = 1'b1;
-            forever begin
+            forever 
+            begin
                 @(posedge vif.aclk);
-                if (prev_aresetn && !vif.aresetn) begin
+                if (prev_aresetn && !vif.aresetn)                                      //It is valid when the previos reset was 1 and the present reset was 0.(It is aresetn active low signal).
+                begin
                     item = axi4lite_seq_item::type_id::create("rst_item");
                     item.rst = 1;
                     mon_ap.write(item);

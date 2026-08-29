@@ -7,21 +7,21 @@ package axi4lite_scoreboard_pkg;
     class axi4lite_scoreboard extends uvm_scoreboard;
         `uvm_component_utils(axi4lite_scoreboard)
 
-        uvm_analysis_export #(axi4lite_seq_item)   sb_export;
-        uvm_tlm_analysis_fifo #(axi4lite_seq_item) sb_fifo;
-        axi4lite_seq_item item;
-
-        // ---- reference model: mirrors the DUT's mem[] + addr_ok() exactly ----
+        uvm_analysis_export #(axi4lite_seq_item)   sb_export;                       //uvm_analysis_imp (direct connection) or uvm_tlm_analysis_fifo (buffered connection), should be the endpoint of the transcation.
+        uvm_tlm_analysis_fifo #(axi4lite_seq_item) sb_fifo;                         //uvm_tlm_analysis_fifo --> A built-in UVM FIFO (queue).it has in-built write function(),so it automatically receive the transactions from monitor.
+        axi4lite_seq_item item;                                                     //no need of calling the explicit write() function.
+                                                                                    // monitor----->uvm_analysis_port------>uvm_analysis_export----->uvm_tlm_analysis_fifo --->scoreboard.
+    
         localparam NUM_WORDS   = 16;
         localparam RESP_OKAY   = 2'b00;
-        localparam RESP_SLVERR = 2'b10;
+        localparam RESP_SLVERR = 2'b10;      //(SLVERR Means Slave Error ------>SLVERR occurs when the address is invalid).
 
         bit [31:0] shadow_mem [0:NUM_WORDS-1];
 
         int write_count, write_correct, write_error;
         int read_count,  read_correct,  read_error;
-        int write_slverr_count, read_slverr_count;
-        int resp_mismatch_count;
+        int write_slverr_count, read_slverr_count;                         //slave cannot successfully perform the requested read or write operation.
+        int resp_mismatch_count;                                           //response from the DUT is different from the expected response(considering both the Read and Write cases).
 
         function new(string name = "axi4lite_scoreboard", uvm_component parent = null);
             super.new(name, parent);
@@ -35,7 +35,8 @@ package axi4lite_scoreboard_pkg;
             read_count  = 0; read_correct  = 0; read_error  = 0;
             write_slverr_count = 0; read_slverr_count = 0;
             resp_mismatch_count = 0;
-            for (int i = 0; i < NUM_WORDS; i++) shadow_mem[i] = 32'h0;
+            for (int i = 0; i < NUM_WORDS; i++) 
+              shadow_mem[i] = 32'h0;
         endfunction
 
         function void connect_phase(uvm_phase phase);
@@ -50,36 +51,43 @@ package axi4lite_scoreboard_pkg;
 
         task run_phase(uvm_phase phase);
             super.run_phase(phase);
-            forever begin
+            forever 
+            begin
                 sb_fifo.get(item);
 
-                if (item.rst) begin
+                if (item.rst) 
+                begin
                     for (int i = 0; i < NUM_WORDS; i++) shadow_mem[i] = 32'h0;
                     `uvm_info("SCOREBOARD", "reset observed, shadow memory cleared", UVM_HIGH)
                 end
 
-                if (item.write_done) begin
+                if (item.write_done)                                              //If the BRESP is wrong, the write transaction is considered an error.
+                begin
                     bit        ok;
-                    bit [1:0]  exp_bresp;
+                    bit [1:0]  exp_bresp;         //Expected Write Response.
                     int        idx;
+
                     write_count++;
                     ok        = addr_ok(item.awaddr);
                     exp_bresp = ok ? RESP_OKAY : RESP_SLVERR;
 
-                    if (item.bresp !== exp_bresp) begin
-                        `uvm_error("SCOREBOARD", $sformatf(
-                            "BRESP mismatch addr=0x%0h got=%0b expected=%0b", item.awaddr, item.bresp, exp_bresp))
+                    if (item.bresp !== exp_bresp) 
+                    begin
+                        `uvm_error("SCOREBOARD", $sformatf("BRESP mismatch addr=0x%0h got=%0b expected=%0b", item.awaddr, item.bresp, exp_bresp))
                         write_error++;
                         resp_mismatch_count++;
                     end
-                    else begin
+                    
+                    else 
+                    begin
                         write_correct++;
                         if (!ok) write_slverr_count++;
                     end
 
                     // model the byte-strobe-preserving write, same as the DUT
-                    if (ok) begin
-                        idx = item.awaddr[5:2];
+                    if (ok) 
+                    begin
+                        idx = item.awaddr[5:2];                                                //It has which mem word we are accessing.
                         if (item.wstrb[0]) shadow_mem[idx][7:0]   = item.wdata[7:0];
                         if (item.wstrb[1]) shadow_mem[idx][15:8]  = item.wdata[15:8];
                         if (item.wstrb[2]) shadow_mem[idx][23:16] = item.wdata[23:16];
@@ -87,29 +95,34 @@ package axi4lite_scoreboard_pkg;
                     end
                 end
 
-                if (item.read_done) begin
+                if (item.read_done) 
+                begin
                     bit        ok;
                     bit [1:0]  exp_rresp;
                     bit [31:0] exp_rdata;
                     int        idx;
                     read_count++;
+
                     ok        = addr_ok(item.araddr);
                     exp_rresp = ok ? RESP_OKAY : RESP_SLVERR;
-                    idx       = item.araddr[5:2];
+                    idx       = item.araddr[5:2];                                   //indicate which word in the shadow_mem.
                     exp_rdata = ok ? shadow_mem[idx] : 32'h0;
 
-                    if (item.rresp !== exp_rresp) begin
-                        `uvm_error("SCOREBOARD", $sformatf(
-                            "RRESP mismatch addr=0x%0h got=%0b expected=%0b", item.araddr, item.rresp, exp_rresp))
+                    if (item.rresp !== exp_rresp)                                //if either RRESP or RDATA is wrong, the read transaction is considered an error.
+                    begin
+                        `uvm_error("SCOREBOARD", $sformatf( "RRESP mismatch addr=0x%0h got=%0b expected=%0b", item.araddr, item.rresp, exp_rresp))
                         read_error++;
                         resp_mismatch_count++;
                     end
-                    else if (item.rdata !== exp_rdata) begin
-                        `uvm_error("SCOREBOARD", $sformatf(
-                            "RDATA mismatch addr=0x%0h got=0x%0h expected=0x%0h", item.araddr, item.rdata, exp_rdata))
+                    
+                    else if (item.rdata !== exp_rdata) 
+                    begin
+                        `uvm_error("SCOREBOARD", $sformatf( "RDATA mismatch addr=0x%0h got=0x%0h expected=0x%0h", item.araddr, item.rdata, exp_rdata))
                         read_error++;
                     end
-                    else begin
+                   
+                    else 
+                    begin
                         read_correct++;
                         if (!ok) read_slverr_count++;
                     end
