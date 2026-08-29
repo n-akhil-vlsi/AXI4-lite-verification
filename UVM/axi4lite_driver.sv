@@ -41,9 +41,9 @@ package axi4lite_driver_pkg;
             @(posedge vif.aclk);
         endtask
 
-        // drives AW and W independently (with optional relative skew) so
-        // both channel orderings, and simultaneous arrival, get exercised.
-        // holds bready until bvalid completes the response.
+        // drives AW and W independently (with optional relative skew) 
+        //so both channel orderings, and simultaneous arrival, get exercised.
+
         task do_write(axi4lite_seq_item item);
             fork
                 begin
@@ -52,7 +52,7 @@ package axi4lite_driver_pkg;
                     vif.awaddr  <= item.awaddr;
                     vif.awprot  <= 3'b000;
                     @(posedge vif.aclk);
-                    while (!vif.awready) @(posedge vif.aclk);
+                    while (!vif.awready) @(posedge vif.aclk);                         //"Keep AWVALID asserted and wait until the slave says it is ready by asserting AWREADY."
                     vif.awvalid <= 1'b0;
                 end
                 begin
@@ -61,25 +61,18 @@ package axi4lite_driver_pkg;
                     vif.wdata  <= item.wdata;
                     vif.wstrb  <= item.wstrb;
                     @(posedge vif.aclk);
-                    while (!vif.wready) @(posedge vif.aclk);
+                    while (!vif.wready) @(posedge vif.aclk);                         //when the wready is high then it moves to the next step.
                     vif.wvalid <= 1'b0;
                 end
             join
 
-            // stall/backpressure: delay accepting the response either by a
-            // small random amount (bready_delay_cycles, everyday stall
-            // testing) or a long fixed hold (resp_hold_cycles, proves the
-            // DUT holds BVALID indefinitely with no internal timeout)
             repeat (item.bready_delay_cycles + item.resp_hold_cycles) @(posedge vif.aclk);
             vif.bready <= 1'b1;
             @(posedge vif.aclk);
             while (!vif.bvalid) @(posedge vif.aclk);
-            item.bresp      = vif.bresp;
-            item.write_done = 1'b1;
             vif.bready <= 1'b0;
 
-            `uvm_info("DRIVER", $sformatf("Driving WRITE addr=0x%0h data=0x%0h strb=%0b",
-                       item.awaddr, item.wdata, item.wstrb), UVM_HIGH)
+            `uvm_info("DRIVER", $sformatf("Driving WRITE addr=0x%0h data=0x%0h strb=%0b", item.awaddr, item.wdata, item.wstrb), UVM_HIGH)
         endtask
 
         // drives AR, then holds rready until rvalid completes the read
@@ -91,15 +84,10 @@ package axi4lite_driver_pkg;
             while (!vif.arready) @(posedge vif.aclk);
             vif.arvalid <= 1'b0;
 
-            // stall/backpressure: same mechanism as the write side, applied
-            // to RREADY (small random stall, or a long fixed hold)
             repeat (item.rready_delay_cycles + item.resp_hold_cycles) @(posedge vif.aclk);
             vif.rready <= 1'b1;
             @(posedge vif.aclk);
             while (!vif.rvalid) @(posedge vif.aclk);
-            item.rdata      = vif.rdata;
-            item.rresp      = vif.rresp;
-            item.read_done  = 1'b1;
             vif.rready <= 1'b0;
 
             `uvm_info("DRIVER", $sformatf("Driving READ addr=0x%0h", item.araddr), UVM_HIGH)
@@ -113,18 +101,24 @@ package axi4lite_driver_pkg;
             vif.arvalid <= 1'b0;
             vif.rready  <= 1'b0;
 
-            forever begin                                    // continuously services the sequencer for the whole run
+            forever 
+            begin                                           // continuously services the sequencer for the whole run
                 seq_item_port.get_next_item(req_item);
-                if (req_item.rst) begin
+                if (req_item.rst) 
+                begin
                     do_reset();
                 end
-                else begin
-                    fork                                      // write and read run in parallel -> tests the two
-                        begin                                  // independent FSMs concurrently, like the DUT intends
-                            if (req_item.do_write) do_write(req_item);
+                
+                else 
+                begin
+                    fork                                                 // write and read run in parallel -> tests the two
+                        begin                                            // independent FSMs concurrently, like the DUT intends
+                            if (req_item.do_write) 
+                            do_write(req_item);
                         end
                         begin
-                            if (req_item.do_read) do_read(req_item);
+                            if (req_item.do_read) 
+                            do_read(req_item);
                         end
                     join
                 end

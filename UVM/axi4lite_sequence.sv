@@ -2,16 +2,17 @@
 package axi4lite_sequence_pkg;
     import uvm_pkg::*;
     import axi4lite_seq_item_pkg::*;
-    `include "uvm_macros.svh"          // a sequence creates+fills seq_items and sends them to the
-                                        // driver through the sequencer
+    `include "uvm_macros.svh"          // a sequence creates+fills seq_items and sends them to the driver through the sequencer.
 
-    // 1) checks the DUT recovers cleanly after reset - one write and one
-    //    read are issued right after release to confirm it comes back alive
+
+    // 1) checks the DUT recovers cleanly after reset - one write and one read are issued right after release to confirm it comes back alive
     class axi4lite_reset_sequence extends uvm_sequence #(axi4lite_seq_item);
         `uvm_object_utils(axi4lite_reset_sequence)
+       
         function new(string name = "axi4lite_reset_sequence");
             super.new(name);
         endfunction
+        
         task body();
             axi4lite_seq_item item;
 
@@ -55,8 +56,7 @@ package axi4lite_sequence_pkg;
         endtask
     endclass
 
-    // 2) writes every legal word address once, so every memory location
-    //    gets touched at least once by this sequence alone
+    // 2) writes every legal word address once, so every memory location gets touched at least once by this sequence alone
     class axi4lite_write_only_sequence extends uvm_sequence #(axi4lite_seq_item);
         `uvm_object_utils(axi4lite_write_only_sequence)
         int num_words = 16;
@@ -67,7 +67,8 @@ package axi4lite_sequence_pkg;
 
         task body();
             axi4lite_seq_item item;
-            for (int i = 0; i < num_words; i++) begin
+            for (int i = 0; i < num_words; i++) 
+            begin
                 item = axi4lite_seq_item::type_id::create("item");
                 start_item(item);
                 item.rst        = 0;
@@ -93,7 +94,8 @@ package axi4lite_sequence_pkg;
 
         task body();
             axi4lite_seq_item item;
-            for (int i = 0; i < num_words; i++) begin
+            for (int i = 0; i < num_words; i++) 
+            begin
                 item = axi4lite_seq_item::type_id::create("item");
                 start_item(item);
                 item.rst        = 0;
@@ -118,7 +120,8 @@ package axi4lite_sequence_pkg;
 
         task body();
             axi4lite_seq_item item;
-            for (int i = 0; i < num_items; i++) begin
+            for (int i = 0; i < num_items; i++) 
+            begin
                 item = axi4lite_seq_item::type_id::create("item");
                 start_item(item);
                 item.rst        = 0;
@@ -135,9 +138,7 @@ package axi4lite_sequence_pkg;
         endtask
     endclass
 
-    // 5) skews AWVALID against WVALID (and vice versa) across consecutive
-    //    writes with no idle gap between them - exercises the DUT's
-    //    aw_hs_done/w_hs_done latch under back-to-back pressure
+    // 5) skews AWVALID against WVALID (and vice versa) across consecutive writes with no idle gap between them - exercises the DUT's
     class axi4lite_back_to_back_sequence extends uvm_sequence #(axi4lite_seq_item);
         `uvm_object_utils(axi4lite_back_to_back_sequence)
         int num_items = 6;
@@ -145,10 +146,11 @@ package axi4lite_sequence_pkg;
         function new(string name = "axi4lite_back_to_back_sequence");
             super.new(name);
         endfunction
-
+                                                                         //back-to-back sequence specifically tests repeated writes + different AW/W arrival order.
         task body();
             axi4lite_seq_item item;
-            for (int i = 0; i < num_items; i++) begin
+            for (int i = 0; i < num_items; i++) 
+            begin
                 item = axi4lite_seq_item::type_id::create("item");
                 start_item(item);
                 item.rst        = 0;
@@ -158,11 +160,14 @@ package axi4lite_sequence_pkg;
                 item.wdata      = $urandom;
                 item.wstrb      = 4'b1111;
                 item.do_read    = 0;
-                // alternate which side of the handshake gets skewed
-                if (i % 2 == 0) begin
+                                                                       //AW and W intentionally arrive at different times.
+                if (i % 2 == 0) 
+                begin
                     item.aw_delay_cycles = 0;
                     item.w_delay_cycles  = 2;   // W arrives late
-                end else begin
+                end 
+                else 
+                begin
                     item.aw_delay_cycles = 2;   // AW arrives late
                     item.w_delay_cycles  = 0;
                 end
@@ -183,7 +188,8 @@ package axi4lite_sequence_pkg;
 
         task body();
             axi4lite_seq_item item;
-            for (int i = 0; i < num_items; i++) begin
+            for (int i = 0; i < num_items; i++) 
+            begin
                 item = axi4lite_seq_item::type_id::create("item");
                 start_item(item);
                 item.rst        = 0;
@@ -200,8 +206,7 @@ package axi4lite_sequence_pkg;
         endtask
     endclass
 
-    // 7) forces addresses beyond NUM_WORDS*4, checks SLVERR and that no
-    //    array index/X value ever escapes on the read side
+   // 7) Tests out-of-range write and read addresses.Checks that the DUT returns SLVERR and does not access invalid memory.
     class axi4lite_out_of_range_sequence extends uvm_sequence #(axi4lite_seq_item);
         `uvm_object_utils(axi4lite_out_of_range_sequence)
         int num_items = 6;
@@ -212,7 +217,8 @@ package axi4lite_sequence_pkg;
 
         task body();
             axi4lite_seq_item item;
-            for (int i = 0; i < num_items; i++) begin
+            for (int i = 0; i < num_items; i++) 
+            begin
                 item = axi4lite_seq_item::type_id::create("item");
                 start_item(item);
                 item.rst        = 0;
@@ -229,12 +235,11 @@ package axi4lite_sequence_pkg;
         endtask
     endclass
 
-    // 8) sweeps every single-byte and half-word WSTRB pattern on the same
-    //    address, checking untouched bytes are preserved across writes
+  // 8) Writes to the same address using different WSTRB patterns and reads it back to check that only the selected bytes are updated.
     class axi4lite_wstrb_sequence extends uvm_sequence #(axi4lite_seq_item);
         `uvm_object_utils(axi4lite_wstrb_sequence)
-        bit [3:0] patterns[8] = '{4'b1111, 4'b0011, 4'b1100, 4'b0001,
-                                   4'b0010, 4'b0100, 4'b1000, 4'b1111};
+        
+        bit [3:0] patterns[8] = '{4'b1111, 4'b0011, 4'b1100, 4'b0001, 4'b0010, 4'b0100, 4'b1000, 4'b1111};
 
         function new(string name = "axi4lite_wstrb_sequence");
             super.new(name);
@@ -242,7 +247,8 @@ package axi4lite_sequence_pkg;
 
         task body();
             axi4lite_seq_item item;
-            foreach (patterns[i]) begin
+            foreach (patterns[i]) 
+            begin
                 item = axi4lite_seq_item::type_id::create("item");
                 start_item(item);
                 item.rst        = 0;
@@ -266,10 +272,9 @@ package axi4lite_sequence_pkg;
         endtask
     endclass
 
-    // 9) exercises random small stalls before BREADY/RREADY are asserted -
-    //    instead of always being instantly ready to accept the response,
-    //    the master occasionally waits a few cycles first. checks the DUT
-    //    doesn't assume an always-ready master on the response channels.
+    // 9) exercises random small stalls before BREADY/RREADY are asserted instead of always being instantly ready to accept the response,
+    //    the master occasionally waits a few cycles first. checks the DUT doesn't assume an always-ready master on the response channels.
+    
     class axi4lite_stall_sequence extends uvm_sequence #(axi4lite_seq_item);
         `uvm_object_utils(axi4lite_stall_sequence)
         int num_items = 10;
@@ -280,7 +285,8 @@ package axi4lite_sequence_pkg;
 
         task body();
             axi4lite_seq_item item;
-            for (int i = 0; i < num_items; i++) begin
+            for (int i = 0; i < num_items; i++) 
+            begin
                 item = axi4lite_seq_item::type_id::create("item");
                 start_item(item);
                 item.rst                 = 0;
@@ -302,15 +308,14 @@ package axi4lite_sequence_pkg;
         endtask
     endclass
 
-    // 10) holds BREADY/RREADY low for a long, fixed stretch after the
-    //     response goes valid, directly testing the RTL's own claim that
-    //     "no internal timeout -- we hold indefinitely, as required".
-    //     checks BVALID/RVALID stay asserted (unglitched) for the whole
-    //     hold, backed up by the bvalid_stable/rvalid_stable SVA checks.
+    // 10) Waits 50 cycles before accepting the write and read responses(this is done by the Master).
+    //     Checks that the DUT keeps the response valid during this wait.
+    //     Ensures the DUT does not timeout or remove the response early.
+
     class axi4lite_response_backpressure_sequence extends uvm_sequence #(axi4lite_seq_item);
         `uvm_object_utils(axi4lite_response_backpressure_sequence)
         int          num_items       = 4;
-        int unsigned hold_cycles     = 50;   // long, fixed - not randomized on purpose
+        int unsigned hold_cycles     = 50;  
 
         function new(string name = "axi4lite_response_backpressure_sequence");
             super.new(name);
@@ -318,12 +323,13 @@ package axi4lite_sequence_pkg;
 
         task body();
             axi4lite_seq_item item;
-            for (int i = 0; i < num_items; i++) begin
+            for (int i = 0; i < num_items; i++) 
+            begin
                 // one long-held write
                 item = axi4lite_seq_item::type_id::create("item");
                 start_item(item);
                 item.rst              = 0;
-                item.do_write         = 1;
+                item.do_write         = 1;                                       //The master waits 50 cycles then accept the write and read responses. 
                 item.waddr_mode       = ADDR_OK;
                 item.awaddr           = (i % 16) * 4;
                 item.wdata            = $urandom;
@@ -332,7 +338,7 @@ package axi4lite_sequence_pkg;
                 item.aw_delay_cycles  = 0;
                 item.w_delay_cycles   = 0;
                 item.bready_delay_cycles = 0;
-                item.resp_hold_cycles = hold_cycles;
+                item.resp_hold_cycles = hold_cycles;                                //Set the number of cycles for which the response should be held before the master accepts it.
                 finish_item(item);
 
                 // one long-held read
@@ -350,8 +356,8 @@ package axi4lite_sequence_pkg;
         endtask
     endclass
 
-    // 11) fully random mix of resets, writes, reads, address legality and
-    //     channel skew - used as the stress/regression scenario
+
+   // 11) Generates 150 completely random transactions with different resets,writes, reads, valid/invalid addresses, delays, and response stalls.
     class axi4lite_random_sequence extends uvm_sequence #(axi4lite_seq_item);
         `uvm_object_utils(axi4lite_random_sequence)
         int num_items = 150;
@@ -362,7 +368,8 @@ package axi4lite_sequence_pkg;
 
         task body();
             axi4lite_seq_item item;
-            for (int i = 0; i < num_items; i++) begin
+            for (int i = 0; i < num_items; i++) 
+            begin
                 item = axi4lite_seq_item::type_id::create("item");
                 start_item(item);
                 assert (item.randomize());
@@ -371,7 +378,7 @@ package axi4lite_sequence_pkg;
         endtask
     endclass
 
-    // 10) master sequence - runs every scenario above back to back on the
+    // 12) master sequence - runs every scenario above back to back on the
     //     same sequencer
     class axi4lite_all_scenarios_sequence extends uvm_sequence #(axi4lite_seq_item);
         `uvm_object_utils(axi4lite_all_scenarios_sequence)
@@ -392,9 +399,10 @@ package axi4lite_sequence_pkg;
             super.new(name);
         endfunction
 
-        // m_sequencer is the handle UVM automatically gives every sequence to
-        // the sequencer it's running on - used since the sequencer lives in
-        // the agent and this sequence doesn't otherwise know its name.
+         //m_sequencer is simply the handle (pointer) to the sequencer on which the current sequence is running. UVM automatically provides it.
+        //the sequencer is in the agent and the sequence is not in the agent,so if we write axi4lite_sequencer the sequence does not identify it.
+        //so UVM automatically stores that sequencer's handle in m_sequencer, so the sequence can use m_sequencer without knowing the actual sequencer variable or its location.
+        
         task body();
             `uvm_info("body", "running reset scenario", UVM_NONE)
             reset_seq = axi4lite_reset_sequence::type_id::create("reset_seq");
