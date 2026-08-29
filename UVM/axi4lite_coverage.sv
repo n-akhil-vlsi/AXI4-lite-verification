@@ -1,18 +1,18 @@
 `timescale 1ns/1ps
-package axi4lite_coverage_pkg;
-
+package axi4lite_coverage_pkg;                                     //The Transaction send from the monitor to the scoreboard and the coverage.
+                                                                   //Here it receives as write() function.In monitor we send it by mon_ap.write().
     import uvm_pkg::*;
     import axi4lite_seq_item_pkg::*;
     `include "uvm_macros.svh"
 
     class axi4lite_coverage extends uvm_subscriber #(axi4lite_seq_item);
-        `uvm_component_utils(axi4lite_coverage)          // axi4lite_coverage is a component
+        `uvm_component_utils(axi4lite_coverage)                                // axi4lite_coverage is a component
         axi4lite_seq_item item;
 
         localparam NUM_WORDS = 16;
 
         covergroup cg;
-            option.per_instance = 1;                 // coverage kept separate per instance
+            option.per_instance = 1;                                            // coverage kept separate per instance
 
             cp_write_done : coverpoint item.write_done;
             cp_read_done  : coverpoint item.read_done;
@@ -26,12 +26,12 @@ package axi4lite_coverage_pkg;
                 bins slverr = {2'b10};
             }
 
-            cp_waddr_word : coverpoint (item.awaddr[5:2]) iff (item.write_done && item.bresp == 2'b00) {
-                bins word[NUM_WORDS] = {[0:NUM_WORDS-1]};
-            }
-            cp_raddr_word : coverpoint (item.araddr[5:2]) iff (item.read_done && item.rresp == 2'b00) {
-                bins word[NUM_WORDS] = {[0:NUM_WORDS-1]};
-            }
+
+            //Sample the write address coverage only if the write transaction is completed successfully(item.write_done && item.bresp == 2'b00).
+            cp_waddr_word : coverpoint (item.awaddr[5:2]) iff (item.write_done && item.bresp == 2'b00) {bins word[NUM_WORDS] = {[0:NUM_WORDS-1]};}
+            
+            
+            cp_raddr_word : coverpoint (item.araddr[5:2]) iff (item.read_done && item.rresp == 2'b00)  {bins word[NUM_WORDS] = {[0:NUM_WORDS-1]};}
 
             cp_wstrb : coverpoint item.wstrb iff (item.write_done) {
                 bins all_bytes  = {4'b1111};
@@ -44,11 +44,8 @@ package axi4lite_coverage_pkg;
                 bins others     = default;
             }
 
-            // simultaneous write+read completing in the same coverage sample
             cross cp_write_done, cp_read_done;
 
-            // both response types cross both channels, so a SLVERR on one
-            // channel while the other channel returns OKAY gets covered
             cross cp_bresp, cp_rresp;
 
         endgroup
@@ -61,11 +58,8 @@ package axi4lite_coverage_pkg;
 
         function void write(axi4lite_seq_item t);
             item = t;
-            `uvm_info("COV", $sformatf(
-                "WR=%0d RD=%0d BRESP=%0b RRESP=%0b AWADDR=0x%0h ARADDR=0x%0h WSTRB=%0b",
-                item.write_done, item.read_done, item.bresp, item.rresp,
-                item.awaddr, item.araddr, item.wstrb), UVM_HIGH)
-
+            `uvm_info("COV", $sformatf( "WR=%0d RD=%0d BRESP=%0b RRESP=%0b AWADDR=0x%0h ARADDR=0x%0h WSTRB=%0b",
+                                        item.write_done, item.read_done, item.bresp, item.rresp, item.awaddr, item.araddr, item.wstrb), UVM_HIGH)
             cg.sample();
 
             `uvm_info("COV", $sformatf("Current Functional Coverage = %0.2f%%", cg.get_inst_coverage()), UVM_HIGH)

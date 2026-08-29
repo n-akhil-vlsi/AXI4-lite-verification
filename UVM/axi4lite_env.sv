@@ -1,5 +1,5 @@
 `timescale 1ns/1ps
-package axi4lite_env_pkg;
+package axi4lite_env_pkg;                                    //env has-----------------scoreboard,agent,coverage.
     import uvm_pkg::*;
     import axi4lite_agent_pkg::*;
     import axi4lite_scoreboard_pkg::*;
@@ -11,8 +11,8 @@ package axi4lite_env_pkg;
 
         axi4lite_agent      agt;
         axi4lite_scoreboard sb;
-        axi4lite_coverage   cov;             // coverage lives in the env, same as the scoreboard -
-                                          // it just consumes monitor transactions instead of checking them
+        axi4lite_coverage   cov;        
+                                        
 
         function new(string name = "axi4lite_env", uvm_component parent = null);
             super.new(name, parent);
@@ -26,7 +26,7 @@ package axi4lite_env_pkg;
         endfunction
 
         function void connect_phase(uvm_phase phase);
-            super.connect_phase(phase);
+            super.connect_phase(phase);                                      //The agent port is connected to the both scoreboard and the coverage.
             agt.agt_ap.connect(sb.sb_export);
             agt.agt_ap.connect(cov.analysis_export);
         endfunction

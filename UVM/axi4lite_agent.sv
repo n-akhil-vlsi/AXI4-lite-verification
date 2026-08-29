@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
-package axi4lite_agent_pkg;
-    import uvm_pkg::*;
+package axi4lite_agent_pkg;                                   //agent has-------sequencer,driver,monitor,config_obj
+    import uvm_pkg::*;                                        //agent is present in the env.
     import axi4lite_sequencer_pkg::*;
     import axi4lite_driver_pkg::*;
     import axi4lite_monitor_pkg::*;
@@ -17,8 +17,8 @@ package axi4lite_agent_pkg;
         axi4lite_config_obj cfg;
 
         uvm_analysis_port #(axi4lite_seq_item) agt_ap;
-        // forwards monitor transactions up to the environment, so the env
-        // only ever connects to the agent, never straight to the monitor
+        //scoreboard is in the env,but the monitor is in the agent,so we cannot directly connect them,agent is in the env.
+        //so we connect monitor to the agent and the agent will be connected to the scoreboard.
 
         function new(string name = "axi4lite_agent", uvm_component parent = null);
             super.new(name, parent);
@@ -33,11 +33,12 @@ package axi4lite_agent_pkg;
             drv    = axi4lite_driver::type_id::create("drv", this);
             mon    = axi4lite_monitor::type_id::create("mon", this);
             agt_ap = new("agt_ap", this);
+
         endfunction
 
         function void connect_phase(uvm_phase phase);
             super.connect_phase(phase);
-            drv.vif = cfg.axi4lite_vif;
+            drv.vif = cfg.axi4lite_vif;                                     //assign the same virtual interface from the config object to both the driver and monitor.
             mon.vif = cfg.axi4lite_vif;
             drv.seq_item_port.connect(sqr.seq_item_export);
             mon.mon_ap.connect(agt_ap);
