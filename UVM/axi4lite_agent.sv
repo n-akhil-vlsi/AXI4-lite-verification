@@ -1,5 +1,5 @@
 `timescale 1ns/1ps
-package axi4lite_agent_pkg;                                   //agent has-------sequencer,driver,monitor,config_obj
+package axi4lite_agent_pkg;                                   //agent has-------sequencer,driver,monitor.
     import uvm_pkg::*;                                        //agent is present in the env.
     import axi4lite_sequencer_pkg::*;
     import axi4lite_driver_pkg::*;

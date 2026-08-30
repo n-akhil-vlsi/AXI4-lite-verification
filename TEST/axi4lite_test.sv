@@ -1,7 +1,7 @@
 `timescale 1ns/1ps
 package axi4lite_test_pkg;
     import uvm_pkg::*;
-    import axi4lite_env_pkg::*;                  // env, config_obj are children of the test
+    import axi4lite_env_pkg::*;                  // env, config_obj are children of the test.
     import axi4lite_sequence_pkg::*;
     import axi4lite_config_obj_pkg::*;
     `include "uvm_macros.svh"
@@ -21,17 +21,15 @@ package axi4lite_test_pkg;
  
             env = axi4lite_env::type_id::create("env", this);
             cfg = axi4lite_config_obj::type_id::create("cfg");
- 
-            if (!uvm_config_db#(virtual axi4lite_if)::get(this, "", "AXIL_IF", cfg.axi4lite_vif))
+                                                                                                            //we are keeping the set in the tb_top.So interface from tb_top--->test--->config_obj---->driver,monitor.
+            if (!uvm_config_db#(virtual axi4lite_if)::get(this, "", "AXIL_IF", cfg.axi4lite_vif))           //As the test is the child of the test_top so it can acess it and it will assign the value to the interface in the config_obj.
                 `uvm_fatal("build_phase", "test could not get the virtual interface from config db")
  
-            uvm_config_db#(axi4lite_config_obj)::set(this, "*", "CFG", cfg);
+            uvm_config_db#(axi4lite_config_obj)::set(this, "*", "CFG", cfg);                                //since we used * so everyone can acess it.
             // 'this' is used for components; 'null' is used for non-components like tb_top module
         endfunction
  
-        // shared power-on reset, issued once at the start of every derived
-        // test's run_phase so the DUT/interface never sit at X before the
-        // real stimulus begins.
+   
         task do_initial_reset();
             axi4lite_reset_sequence rst_seq;
             rst_seq = axi4lite_reset_sequence::type_id::create("rst_seq");
@@ -40,7 +38,7 @@ package axi4lite_test_pkg;
         endtask
  
     endclass
- 
+
     class axi4lite_reset_test extends axi4lite_base_test;
         `uvm_component_utils(axi4lite_reset_test)
         axi4lite_reset_sequence seq;
