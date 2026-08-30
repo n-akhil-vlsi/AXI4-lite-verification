@@ -28,7 +28,7 @@ package axi4lite_env_pkg;                                    //env has----------
         function void connect_phase(uvm_phase phase);
             super.connect_phase(phase);                                      //The agent port is connected to the both scoreboard and the coverage.
             agt.agt_ap.connect(sb.sb_export);
-            agt.agt_ap.connect(cov.analysis_export);
+            agt.agt_ap.connect(cov.analysis_export);                         //The analysis_export is inherited from the uvm_subscriber so we dont need to mention it explicitly.
         endfunction
 
     endclass

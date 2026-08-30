@@ -8,14 +8,14 @@ module axi4lite_tb_top;
 
     // 100 MHz clock
     bit clk;
-    always #5 clk = ~clk;   // 10ns period = 100MHz
+    always #5 clk = ~clk;  
 
-    axi4lite_if aif ();
-    assign aif.aclk = clk;
-
-    axils dut (
-        .s_axi_aclk    (aif.aclk),
-        .s_axi_aresetn (aif.aresetn),
+    axi4lite_if aif ();                                  //axi4lite_if → interface type,   aif → actual interface instance
+    assign aif.aclk = clk;                               //virtual axi4lite_if vif;------------in the monitor,scoreboard.
+                                                         //virtual axi4lite_if axi4lite_vif;-------in the config_obj
+    axils dut (                                          //all has the same interface type(axi4lite_if).
+        .s_axi_aclk    (aif.aclk),                       //vif,axi4lite_vif ---They are virtual interface handles that point to the same actual instance aif.
+        .s_axi_aresetn (aif.aresetn),                   
 
         .s_axi_awvalid (aif.awvalid),
         .s_axi_awready (aif.awready),
@@ -42,8 +42,9 @@ module axi4lite_tb_top;
         .s_axi_rresp   (aif.rresp)
     );
 
-    // bind the protocol-assertion checker straight into the DUT so it can
-    // see the AXI signals without any extra wiring in this top module
+    // bind the protocol-assertion checker straight into the DUT.
+    //bind <target_module> <assertion_module> <instance_name> ().
+
     bind axils axi4lite_sva u_axi4lite_sva (
         .clk      (s_axi_aclk),
         .aresetn  (s_axi_aresetn),
@@ -61,10 +62,14 @@ module axi4lite_tb_top;
         .rresp    (s_axi_rresp)
     );
 
-    initial begin
-        uvm_config_db#(virtual axi4lite_if)::set(null, "uvm_test_top", "AXIL_IF", aif);
-        // driver and monitor don't need their own get() for the interface -
-        // they receive it through axi4lite_config_obj instead
+
+    //Test file (axi4lite_test) → Gets "AXIL_IF" from uvm_config_db and stores it in cfg.axi4lite_vif.
+    //The test receives aif first through uvm_config_db, stores it in the config object, and then the agent passes it to the driver and monitor.
+    //TB_TOP → Config DB → Test → Config Object → Agent → Driver.
+    
+    initial 
+    begin
+        uvm_config_db#(virtual axi4lite_if)::set(null, "uvm_test_top", "AXIL_IF", aif);                    
         run_test();
     end
 
